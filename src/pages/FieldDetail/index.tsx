@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   Alert,
-  Badge,
   Button,
   Col,
   Divider,
@@ -12,10 +11,20 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { ArrowLeft, CheckCircle, Clock, MapPin, Wifi, Droplets, Car, Dumbbell } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle,
+  Clock,
+  MapPin,
+  Wifi,
+  Droplets,
+  Car,
+  Dumbbell,
+} from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import dayjs, { Dayjs } from 'dayjs';
-import { useField } from '../../hooks/useFields';
+
+import { useGroundDetail } from '../../hooks/useFields';
 import { useCreateBooking } from '../../hooks/useBookings';
 import { useAuthContext } from '../../contexts/AuthContext';
 import BookingSlotPicker from '../../components/BookingSlotPicker';
@@ -38,27 +47,56 @@ export default function FieldDetail() {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
 
-  const { data: field, isLoading, isError } = useField(Number(id));
+  // ✅ FIX: pakai detail hook
+  const { data, isLoading, isError } = useGroundDetail(id!);
+
   const createBooking = useCreateBooking();
+
+  // ✅ Mapping backend → frontend
+  const field = data
+    ? {
+        id: data.id,
+        name: data.name_ground,
+        location: data.location,
+        pricePerHour: data.price_per_hour,
+        isAvailable: data.is_available,
+
+        // fallback (karena backend belum ada)
+        imageUrl:
+          'https://images.pexels.com/photos/1171084/pexels-photo-1171084.jpeg?auto=compress&cs=tinysrgb&w=1200',
+        sport: 'futsal',
+        rating: 0,
+        openTime: '08:00',
+        closeTime: '22:00',
+        facilities: [],
+        description: '',
+      }
+    : null;
 
   const toggleSlot = (slot: string) => {
     setSelectedSlots((prev) =>
-      prev.includes(slot) ? prev.filter((s) => s !== slot) : [...prev, slot].sort()
+      prev.includes(slot)
+        ? prev.filter((s) => s !== slot)
+        : [...prev, slot].sort()
     );
   };
 
-  const totalPrice = field ? selectedSlots.length * field.pricePerHour : 0;
+  const totalPrice =
+    field ? selectedSlots.length * field.pricePerHour : 0;
 
   const handleBook = async () => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
+
     if (!field || !selectedDate || selectedSlots.length === 0) return;
 
     const sorted = [...selectedSlots].sort();
     const startTime = sorted[0];
-    const endTime = dayjs(`2000-01-01 ${sorted[sorted.length - 1]}`).add(1, 'hour').format('HH:mm');
+    const endTime = dayjs(`2000-01-01 ${sorted[sorted.length - 1]}`)
+      .add(1, 'hour')
+      .format('HH:mm');
 
     const booking = await createBooking.mutateAsync({
       fieldId: field.id,
@@ -70,6 +108,8 @@ export default function FieldDetail() {
 
     navigate(`/payment/${booking.id}`);
   };
+
+  // ================= UI =================
 
   if (isLoading) {
     return (
@@ -84,54 +124,56 @@ export default function FieldDetail() {
       <Result
         status="404"
         title="Lapangan tidak ditemukan"
-        extra={<Button type="primary" onClick={() => navigate('/')}>Kembali ke Beranda</Button>}
+        extra={
+          <Button type="primary" onClick={() => navigate('/')}>
+            Kembali ke Beranda
+          </Button>
+        }
       />
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Image */}
+      {/* Hero */}
       <div className="relative h-64 sm:h-80 md:h-96 overflow-hidden bg-gray-200">
         <img
           src={field.imageUrl}
           alt={field.name}
           className="w-full h-full object-cover"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src =
-              'https://images.pexels.com/photos/1171084/pexels-photo-1171084.jpeg?auto=compress&cs=tinysrgb&w=1200';
-          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <button
           onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 bg-white/90 hover:bg-white rounded-full p-2 shadow-md transition-colors"
+          className="absolute top-4 left-4 bg-white/90 rounded-full p-2 shadow-md"
         >
           <ArrowLeft size={18} />
         </button>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         <Row gutter={[32, 32]}>
-          {/* Left: Info */}
+          {/* LEFT */}
           <Col xs={24} lg={14}>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div>
-                  <Tag color="blue" className="capitalize mb-2">{field.sport}</Tag>
-                  <Title level={2} className="!mb-0">{field.name}</Title>
-                </div>
-                <Rate disabled defaultValue={field.rating} allowHalf className="flex-shrink-0" />
-              </div>
+            <div className="bg-white rounded-2xl p-6">
+              <Tag color="blue" className="capitalize mb-2">
+                {field.sport}
+              </Tag>
 
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <MapPin size={16} className="text-blue-500 flex-shrink-0" />
+              <Title level={2}>{field.name}</Title>
+
+              <Rate disabled defaultValue={field.rating} />
+
+              <div className="mt-4 space-y-2 text-gray-600">
+                <div className="flex items-center gap-2">
+                  <MapPin size={16} />
                   <Text>{field.location}</Text>
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Clock size={16} className="text-blue-500 flex-shrink-0" />
-                  <Text>Jam Operasional: {field.openTime} – {field.closeTime}</Text>
+                <div className="flex items-center gap-2">
+                  <Clock size={16} />
+                  <Text>
+                    {field.openTime} – {field.closeTime}
+                  </Text>
                 </div>
               </div>
 
@@ -139,19 +181,22 @@ export default function FieldDetail() {
 
               {field.description && (
                 <>
-                  <Title level={5}>Tentang Lapangan</Title>
-                  <Paragraph className="text-gray-600">{field.description}</Paragraph>
+                  <Title level={5}>Deskripsi</Title>
+                  <Paragraph>{field.description}</Paragraph>
                   <Divider />
                 </>
               )}
 
               <Title level={5}>Fasilitas</Title>
               <div className="flex flex-wrap gap-2">
-                {field.facilities?.map((f) => (
+                {field.facilities.map((f) => (
                   <Tag
                     key={f}
-                    icon={facilityIcons[f.toLowerCase()] || <CheckCircle size={12} />}
-                    className="capitalize px-3 py-1"
+                    icon={
+                      facilityIcons[String(f).toLowerCase()] || (
+                        <CheckCircle size={12} />
+                      )
+                    }
                   >
                     {f}
                   </Tag>
@@ -160,13 +205,12 @@ export default function FieldDetail() {
             </div>
           </Col>
 
-          {/* Right: Booking */}
+          {/* RIGHT */}
           <Col xs={24} lg={10}>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
-              <div className="flex items-baseline gap-1 mb-5">
-                <Text className="text-2xl font-bold text-blue-600">{formatPrice(field.pricePerHour)}</Text>
-                <Text className="text-gray-400 text-sm">/jam</Text>
-              </div>
+            <div className="bg-white rounded-2xl p-6 sticky top-24">
+              <Text className="text-2xl font-bold text-blue-600">
+                {formatPrice(field.pricePerHour)} / jam
+              </Text>
 
               <BookingSlotPicker
                 fieldId={field.id}
@@ -174,22 +218,22 @@ export default function FieldDetail() {
                 closeTime={field.closeTime}
                 selectedDate={selectedDate}
                 selectedSlots={selectedSlots}
-                onDateChange={(d) => { setSelectedDate(d); setSelectedSlots([]); }}
+                onDateChange={(d) => {
+                  setSelectedDate(d);
+                  setSelectedSlots([]);
+                }}
                 onSlotToggle={toggleSlot}
               />
 
               {selectedSlots.length > 0 && (
-                <div className="mt-5 p-4 bg-gray-50 rounded-xl">
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
-                    <span>{selectedSlots.length} jam × {formatPrice(field.pricePerHour)}</span>
-                    <span className="font-semibold text-gray-900">{formatPrice(totalPrice)}</span>
-                  </div>
+                <div className="mt-4">
+                  Total: {formatPrice(totalPrice)}
                 </div>
               )}
 
               {!isAuthenticated && selectedSlots.length > 0 && (
                 <Alert
-                  message="Silakan login untuk melakukan booking"
+                  message="Login untuk booking"
                   type="warning"
                   showIcon
                   className="mt-3"
@@ -198,14 +242,13 @@ export default function FieldDetail() {
 
               <Button
                 type="primary"
-                size="large"
                 block
                 className="mt-4"
                 disabled={!selectedDate || selectedSlots.length === 0}
                 loading={createBooking.isPending}
                 onClick={handleBook}
               >
-                {isAuthenticated ? 'Booking Sekarang' : 'Login untuk Booking'}
+                {isAuthenticated ? 'Booking' : 'Login'}
               </Button>
             </div>
           </Col>

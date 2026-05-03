@@ -14,7 +14,30 @@ export interface RegisterPayload {
 
 export interface AuthResponse {
   token: string;
+  refreshToken?: string;
+  tokenType?: string;
+  expiresIn?: number;
+  email?: string;
+  username?: string;
 }
+
+interface ApiEnvelope<T> {
+  code: string;
+  data: T;
+}
+
+const unwrapApiResponse = <T>(response: T | ApiEnvelope<T>): T => {
+  if (
+    response &&
+    typeof response === 'object' &&
+    'data' in response &&
+    'code' in response
+  ) {
+    return (response as ApiEnvelope<T>).data;
+  }
+
+  return response as T;
+};
 
 export interface UserProfile {
   id: number;
@@ -25,10 +48,14 @@ export interface UserProfile {
 }
 
 export const login = (data: LoginPayload) =>
-  client.post<AuthResponse>('/auth/login', data).then((r) => r.data);
+  client
+    .post<AuthResponse | ApiEnvelope<AuthResponse>>('/auth/login', data)
+    .then((r) => unwrapApiResponse(r.data));
 
 export const register = (data: RegisterPayload) =>
-  client.post<AuthResponse>('/auth/register', data).then((r) => r.data);
+  client
+    .post<AuthResponse | ApiEnvelope<AuthResponse>>('/auth/register', data)
+    .then((r) => unwrapApiResponse(r.data));
 
 export const fetchMe = () =>
   client.get<UserProfile>('/users/me').then((r) => r.data);

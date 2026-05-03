@@ -15,7 +15,7 @@ export interface Booking {
 }
 
 export interface CreateBookingPayload {
-  fieldId: number;
+  fieldId: string;
   date: string;
   startTime: string;
   endTime: string;

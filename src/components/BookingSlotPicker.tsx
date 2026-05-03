@@ -6,7 +6,7 @@ import { useAvailableSlots } from '../hooks/useFields';
 const { Text } = Typography;
 
 interface Props {
-  fieldId: number;
+  fieldId: string;
   openTime: string;
   closeTime: string;
   selectedDate: Dayjs | null;
@@ -36,7 +36,7 @@ export default function BookingSlotPicker({
   onSlotToggle,
 }: Props) {
   const dateStr = selectedDate ? selectedDate.format('YYYY-MM-DD') : null;
-  const { data: available, isLoading, isError } = useAvailableSlots(fieldId, dateStr);
+  const { data: available, isLoading, isError } = useAvailableSlots(fieldId, dateStr!);
 
   const allSlots = generateAllSlots(openTime, closeTime);
 

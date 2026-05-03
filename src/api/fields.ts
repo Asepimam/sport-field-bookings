@@ -1,27 +1,30 @@
 import client from './client';
 
-export interface Field {
-  id: number;
-  name: string;
-  sport: string;
+// ================= TYPES =================
+
+export interface GroundResponse {
+  id: string;
+  name_ground: string;
   location: string;
-  pricePerHour: number;
+  price_per_hour: number;
+  is_available: boolean;
+  open_time: string;
+  close_time: string;
+  sport_type: string;
   rating: number;
-  imageUrl: string;
-  facilities: string[];
-  openTime: string;
-  closeTime: string;
-  description?: string;
-  ownerId: number;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface FieldFilters {
-  sport?: string;
-  location?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  page?: number;
-  size?: number;
+export interface ApiResponse<T> {
+  status: string;
+  data: T;
+  meta?: {
+    page: number;
+    size: number;
+    total: number;
+    totalPages?: number;
+  };
 }
 
 export interface PagedResponse<T> {
@@ -32,13 +35,74 @@ export interface PagedResponse<T> {
   size: number;
 }
 
-export const fetchFields = (params: FieldFilters) =>
-  client.get<PagedResponse<Field>>('/fields', { params }).then((r) => r.data);
+export interface FieldFilters {
+  sport?: string;
+  location?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  order?: string;
+}
 
-export const fetchField = (id: number) =>
-  client.get<Field>(`/fields/${id}`).then((r) => r.data);
+// ================= ADAPTER =================
 
-export const fetchAvailableSlots = (id: number, date: string) =>
+const toPagedResponse = <T>(
+  res: ApiResponse<T[]>
+): PagedResponse<T> => {
+  return {
+    content: res.data ?? [],
+    totalElements: res.meta?.total ?? 0,
+    totalPages: res.meta?.totalPages ?? 0,
+    number: res.meta?.page ?? 1,
+    size: res.meta?.size ?? 10,
+  };
+};
+
+// ================= API =================
+
+// PUBLIC GROUNDS (FIXED)
+export const fetchPublicGrounds = (params?: FieldFilters) =>
   client
-    .get<string[]>(`/fields/${id}/available-slots`, { params: { date } })
-    .then((r) => r.data);
+    .get<ApiResponse<GroundResponse[]>>('/grounds/public', { params })
+    .then((response) => {
+      if (import.meta.env.DEV) {
+        console.log('[API] public grounds raw:', response.data);
+      }
+      return toPagedResponse(response.data);
+    });
+
+// OWNER GROUNDS (FIXED)
+export const fetchOwnerGrounds = (params?: FieldFilters) =>
+  client
+    .get<ApiResponse<GroundResponse[]>>('/grounds/owner', { params })
+    .then((res) => toPagedResponse(res.data));
+
+// CREATE
+export const createGround = (data: {
+  name_ground: string;
+  location: string;
+  price_per_hour: number;
+  is_available: boolean;
+}) =>
+  client
+    .post<ApiResponse<GroundResponse>>('/grounds', data)
+    .then((res) => res.data);
+
+// DETAIL
+export const fetchGroundById = (id: string) =>
+  client
+    .get<ApiResponse<GroundResponse>>(`/grounds/${id}`)
+    .then((res) => res.data.data);
+
+// AVAILABLE SLOTS
+export const fetchAvailableSlots = (
+  groundId: string,
+  date: string
+) =>
+  client
+    .get<string[]>(`/grounds/${groundId}/available-slots`, {
+      params: { date },
+    })
+    .then((res) => res.data);

@@ -1,33 +1,58 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { fetchField, fetchFields, fetchAvailableSlots } from '../api/fields';
-import type { FieldFilters } from '../api/fields';
+import {
+  fetchPublicGrounds,
+  fetchGroundById,
+  fetchAvailableSlots,
+  FieldFilters,
+  GroundResponse,
+  PagedResponse,
+} from '../api/fields';
 
-export function useFields(filters: Omit<FieldFilters, 'page'>) {
-  return useInfiniteQuery({
+// ================= LIST =================
+
+export const useFields = (
+  filters: Omit<FieldFilters, 'page' | 'size'>
+) => {
+  return useInfiniteQuery<PagedResponse<GroundResponse>>({
     queryKey: ['fields', filters],
-    queryFn: ({ pageParam = 0 }) =>
-      fetchFields({ ...filters, page: pageParam as number, size: 12 }),
-    getNextPageParam: (last) =>
-      last.number + 1 < last.totalPages ? last.number + 1 : undefined,
-    initialPageParam: 0,
-    staleTime: 2 * 60 * 1000,
-  });
-}
+    queryFn: ({ pageParam = 1 }) =>
+      fetchPublicGrounds({
+        ...filters,
+        page: pageParam as number,
+        size: 10,
+      }),
 
-export function useField(id: number) {
-  return useQuery({
-    queryKey: ['field', id],
-    queryFn: () => fetchField(id),
+    getNextPageParam: (lastPage) => {
+      // FIX: prevent over-fetch
+      if (lastPage.number >= lastPage.totalPages) return undefined;
+      return lastPage.number + 1;
+    },
+
+    initialPageParam: 1,
     staleTime: 5 * 60 * 1000,
+  });
+};
+
+// ================= DETAIL =================
+
+export const useGroundDetail = (id: string) => {
+  return useQuery({
+    queryKey: ['ground', id],
+    queryFn: () => fetchGroundById(id),
     enabled: !!id,
   });
-}
+};
 
-export function useAvailableSlots(fieldId: number, date: string | null) {
+// ================= SLOTS =================
+
+export const useAvailableSlots = (
+  groundId: string,
+  date: string
+) => {
   return useQuery({
-    queryKey: ['slots', fieldId, date],
-    queryFn: () => fetchAvailableSlots(fieldId, date!),
-    enabled: !!date && !!fieldId,
-    staleTime: 30 * 1000,
+    queryKey: ['availableSlots', groundId, date],
+    queryFn: () => fetchAvailableSlots(groundId, date),
+    enabled: !!groundId && !!date,
+    staleTime: 5 * 60 * 1000,
   });
-}
+};
