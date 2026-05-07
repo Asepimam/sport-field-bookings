@@ -15,30 +15,30 @@ export default function CustomerBookings() {
   const columns: ColumnsType<Booking> = [
     {
       title: 'Lapangan',
-      dataIndex: 'fieldName',
-      key: 'fieldName',
+      dataIndex: 'ground_name',
+      key: 'ground_name',
       render: (name: string, row) => (
         <div>
           <Text strong>{name}</Text>
-          <div className="text-xs text-gray-500">{row.fieldLocation}</div>
+          <div className="text-xs text-gray-500">{row.ground_location}</div>
         </div>
       ),
     },
     {
       title: 'Tanggal',
-      dataIndex: 'date',
-      key: 'date',
+      dataIndex: 'booking_date',
+      key: 'booking_date',
       render: (d: string) => formatDate(d),
     },
     {
       title: 'Jam',
       key: 'time',
-      render: (_, row) => `${row.startTime} – ${row.endTime}`,
+      render: (_, row) => `${row.start_time} – ${row.end_time}`,
     },
     {
       title: 'Total',
-      dataIndex: 'totalPrice',
-      key: 'totalPrice',
+      dataIndex: 'total_price',
+      key: 'total_price',
       render: (p: number) => (
         <Text strong className="text-blue-600">{formatPrice(p)}</Text>
       ),
@@ -94,7 +94,7 @@ export default function CustomerBookings() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <Table
               columns={columns}
-              dataSource={bookings}
+              dataSource={bookings ?? []}
               rowKey="id"
               pagination={{ pageSize: 10 }}
               locale={{ emptyText: 'Belum ada booking' }}

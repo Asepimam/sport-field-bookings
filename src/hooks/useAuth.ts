@@ -57,6 +57,9 @@ export function useLogin() {
     mutationFn: (data: LoginPayload) => login(data),
     onSuccess: (res) => {
       setToken(res.token);
+      if (res.refreshToken) {
+        localStorage.setItem('refreshToken', res.refreshToken);
+      }
     },
     onError: (error) => {
       message.error(getAuthErrorMessage(error, 'Email atau password salah'));
@@ -70,6 +73,9 @@ export function useRegister() {
     mutationFn: (data: RegisterPayload) => register(data),
     onSuccess: (res) => {
       setToken(res.token);
+      if (res.refreshToken) {
+        localStorage.setItem('refreshToken', res.refreshToken);
+      }
       message.success('Registrasi berhasil!');
     },
     onError: (error) => {

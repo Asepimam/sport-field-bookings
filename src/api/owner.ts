@@ -9,35 +9,60 @@ export interface RevenueStats {
 }
 
 export interface CreateFieldPayload {
-  name: string;
-  sport: string;
+  name_ground: string;
   location: string;
-  pricePerHour: number;
+  price_per_hour: number;
+  is_available: boolean;
+  sport_type: string;
   open_time: string;
   close_time: string;
-  facilities: string[];
-  description?: string;
+  cover_image_url: string;
 }
 
+interface ApiEnvelope<T> {
+  code?: string;
+  status?: string;
+  data: T;
+  meta?: {
+    page: number;
+    size: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+const unwrapApiResponse = <T>(response: T | ApiEnvelope<T>): T => {
+  if (
+    response &&
+    typeof response === 'object' &&
+    'data' in response
+  ) {
+    return (response as ApiEnvelope<T>).data;
+  }
+
+  return response as T;
+};
+
 export const fetchOwnerFields = () =>
-  client.get<ApiResponse<GroundResponse[]>>('grounds/owner').then((r) => toPagedResponse(r.data));
+  client.get<ApiResponse<GroundResponse[]>>('/grounds/owner/').then((r) => toPagedResponse(r.data));
 
-export const createField = (data: FormData) =>
+export const createField = (data: CreateFieldPayload) =>
   client
-    .post<GroundResponse>('/owner/fields', data, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    .then((r) => r.data);
+    .post<GroundResponse | ApiEnvelope<GroundResponse>>('/grounds', data)
+    .then((r) => unwrapApiResponse(r.data));
 
-export const updateField = (id: string, data: FormData) =>
+export const updateField = (id: string, data: CreateFieldPayload) =>
   client
-    .put<GroundResponse>(`/owner/fields/${id}`, data, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    .then((r) => r.data);
+    .put<GroundResponse | ApiEnvelope<GroundResponse>>(`/grounds/${id}`, data)
+    .then((r) => unwrapApiResponse(r.data));
 
 export const fetchOwnerBookings = () =>
-  client.get<Booking[]>('/owner/bookings').then((r) => r.data);
+  client
+    .get<Booking[] | ApiEnvelope<Booking[]>>('/bookings/owner')
+    .then((r) => {
+      const bookings = unwrapApiResponse(r.data);
+      return Array.isArray(bookings) ? bookings : [];
+    });
 
 export const confirmBooking = (id: string) =>
   client.put<Booking>(`/owner/bookings/${id}/confirm`).then((r) => r.data);

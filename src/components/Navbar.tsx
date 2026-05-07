@@ -1,5 +1,5 @@
 import { Avatar, Button, Dropdown, Typography } from 'antd';
-import { LogIn, LogOut, LayoutDashboard, User } from 'lucide-react';
+import { Home, LogIn, LogOut, LayoutDashboard, User } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useAuth';
@@ -13,6 +13,18 @@ export default function Navbar() {
 
   const menuItems = [
     {
+      key: 'profile',
+      icon: <User size={14} />,
+      label: 'Lihat Profil',
+      onClick: () => navigate('/profile'),
+    },
+    {
+      key: 'home',
+      icon: <Home size={14} />,
+      label: 'Home',
+      onClick: () => navigate('/'),
+    },
+    {
       key: 'dashboard',
       icon: <LayoutDashboard size={14} />,
       label: isOwner ? 'Owner Dashboard' : 'Booking Saya',
@@ -24,7 +36,10 @@ export default function Navbar() {
       icon: <LogOut size={14} />,
       label: 'Logout',
       danger: true,
-      onClick: logout,
+      onClick: () => {
+        logout();
+        navigate('/');
+      },
     },
   ];
 

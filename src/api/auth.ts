@@ -6,10 +6,13 @@ export interface LoginPayload {
 }
 
 export interface RegisterPayload {
-  username: string;
-  email: string;
+  user_name: string;
   password: string;
+  email: string;
   role: 'CUSTOMER' | 'OWNER';
+  phone_number: string;
+  first_name: string;
+  last_name: string;
 }
 
 export interface AuthResponse {
@@ -19,6 +22,7 @@ export interface AuthResponse {
   expiresIn?: number;
   email?: string;
   username?: string;
+  user_name?: string;
 }
 
 interface ApiEnvelope<T> {
@@ -40,12 +44,30 @@ const unwrapApiResponse = <T>(response: T | ApiEnvelope<T>): T => {
 };
 
 export interface UserProfile {
-  id: number;
+  id: number | string;
   name: string;
   email: string;
   role: 'CUSTOMER' | 'OWNER';
   avatar?: string;
 }
+
+interface RawUserProfile {
+  id: number | string;
+  name?: string;
+  username?: string;
+  email: string;
+  role?: 'CUSTOMER' | 'OWNER';
+  groups?: ('CUSTOMER' | 'OWNER')[];
+  avatar?: string;
+}
+
+const normalizeUserProfile = (profile: RawUserProfile): UserProfile => ({
+  id: profile.id,
+  name: profile.name ?? profile.username ?? profile.email,
+  email: profile.email,
+  role: profile.role ?? (profile.groups?.includes('OWNER') ? 'OWNER' : 'CUSTOMER'),
+  avatar: profile.avatar,
+});
 
 export const login = (data: LoginPayload) =>
   client
@@ -58,4 +80,6 @@ export const register = (data: RegisterPayload) =>
     .then((r) => unwrapApiResponse(r.data));
 
 export const fetchMe = () =>
-  client.get<UserProfile>('/users/me').then((r) => r.data);
+  client
+    .get<RawUserProfile | ApiEnvelope<RawUserProfile>>('/profile/me')
+    .then((r) => normalizeUserProfile(unwrapApiResponse(r.data)));

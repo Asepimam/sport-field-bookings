@@ -11,13 +11,18 @@ export interface GroundResponse {
   open_time: string;
   close_time: string;
   sport_type: string;
+  cover_image_url?: string;
+  cove_image_url?: string;
   rating: number;
+  total_reviews?: number;
+  is_open_now?: boolean;
   created_at: string;
   updated_at: string;
 }
 
 export interface ApiResponse<T> {
-  status: string;
+  code?: string;
+  status?: string;
   data: T;
   meta?: {
     page: number;
@@ -26,6 +31,9 @@ export interface ApiResponse<T> {
     totalPages?: number;
   };
 }
+
+export const getGroundCoverImageUrl = (ground: GroundResponse) =>
+  ground.cover_image_url ?? ground.cove_image_url;
 
 export interface PagedResponse<T> {
   content: T[];
@@ -76,7 +84,7 @@ export const fetchPublicGrounds = (params?: FieldFilters) =>
 // OWNER GROUNDS (FIXED)
 export const fetchOwnerGrounds = (params?: FieldFilters) =>
   client
-    .get<ApiResponse<GroundResponse[]>>('/grounds/owner', { params })
+    .get<ApiResponse<GroundResponse[]>>('/grounds/owner/', { params })
     .then((res) => toPagedResponse(res.data));
 
 // CREATE
@@ -88,7 +96,7 @@ export const createGround = (data: {
 }) =>
   client
     .post<ApiResponse<GroundResponse>>('/grounds', data)
-    .then((res) => res.data);
+    .then((res) => res.data.data);
 
 // DETAIL
 export const fetchGroundById = (id: string) =>
@@ -102,7 +110,17 @@ export const fetchAvailableSlots = (
   date: string
 ) =>
   client
-    .get<string[]>(`/grounds/${groundId}/available-slots`, {
+    .get<string[] | ApiResponse<string[]>>(`/grounds/${groundId}/available-slots`, {
       params: { date },
     })
-    .then((res) => res.data);
+    .then((res) => {
+      if (
+        res.data &&
+        typeof res.data === 'object' &&
+        'data' in res.data
+      ) {
+        return res.data.data;
+      }
+
+      return Array.isArray(res.data) ? res.data : [];
+    });

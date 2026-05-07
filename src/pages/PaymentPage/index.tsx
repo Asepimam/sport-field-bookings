@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Card, Col, Radio, Result, Row, Spin, Tag, Typography } from 'antd';
+import { Button, Card, Radio, Result, Row, Spin, Tag, Typography } from 'antd';
 import { Building2, QrCode, ShieldCheck } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMyBookings } from '../../hooks/useBookings';
@@ -18,7 +18,7 @@ export default function PaymentPage() {
   const { data: bookings, isLoading } = useMyBookings();
   const confirmPayment = useConfirmPayment();
 
-  const booking = bookings?.find((b) => b.id === Number(bookingId));
+  const booking = bookings?.find((b) => b.id === bookingId);
 
   const handlePay = () => {
     if (!booking) return;
@@ -60,19 +60,19 @@ export default function PaymentPage() {
           <div className="space-y-3">
             <Row justify="space-between">
               <Text className="text-gray-500">Lapangan</Text>
-              <Text strong>{booking.fieldName}</Text>
+              <Text strong>{booking.ground_name}</Text>
             </Row>
             <Row justify="space-between">
               <Text className="text-gray-500">Lokasi</Text>
-              <Text>{booking.fieldLocation}</Text>
+              <Text>{booking.ground_location}</Text>
             </Row>
             <Row justify="space-between">
               <Text className="text-gray-500">Tanggal</Text>
-              <Text>{formatDate(booking.date)}</Text>
+              <Text>{formatDate(booking.booking_date)}</Text>
             </Row>
             <Row justify="space-between">
               <Text className="text-gray-500">Jam</Text>
-              <Text>{booking.startTime} – {booking.endTime}</Text>
+              <Text>{booking.start_time} – {booking.end_time}</Text>
             </Row>
             <Row justify="space-between">
               <Text className="text-gray-500">Status</Text>
@@ -81,7 +81,7 @@ export default function PaymentPage() {
             <div className="border-t pt-3 mt-2">
               <Row justify="space-between">
                 <Text strong className="text-base">Total Pembayaran</Text>
-                <Text strong className="text-blue-600 text-xl">{formatPrice(booking.totalPrice)}</Text>
+                <Text strong className="text-blue-600 text-xl">{formatPrice(booking.total_price)}</Text>
               </Row>
             </div>
           </div>

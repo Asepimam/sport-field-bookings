@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function ProtectedRoute({ children, requiredRole }: Props) {
-  const { isAuthenticated, user } = useAuthContext();
+  const { isAuthenticated, user, role } = useAuthContext();
   const location = useLocation();
   const { isLoading } = useProfile();
 
@@ -17,7 +17,7 @@ export default function ProtectedRoute({ children, requiredRole }: Props) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (isLoading && !user) {
+  if (isLoading && !user && !role) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Spin size="large" />
@@ -25,7 +25,7 @@ export default function ProtectedRoute({ children, requiredRole }: Props) {
     );
   }
 
-  if (requiredRole && user && user.role !== requiredRole) {
+  if (requiredRole && role && role !== requiredRole) {
     return <Navigate to="/" replace />;
   }
 

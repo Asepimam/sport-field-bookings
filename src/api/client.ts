@@ -16,7 +16,7 @@ const client = axios.create({
 // Request interceptor untuk menambahkan token
 client.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('accessToken');
+        const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -57,15 +57,22 @@ client.interceptors.response.use(
                         refreshToken: refreshToken
                     });
                     
-                    const { accessToken } = response.data.data;
-                    localStorage.setItem('accessToken', accessToken);
+                    const refreshedToken = response.data.data?.token ?? response.data.data?.accessToken;
+                    const refreshedRefreshToken = response.data.data?.refreshToken;
+
+                    localStorage.setItem('accessToken', refreshedToken);
+                    localStorage.setItem('token', refreshedToken);
+                    if (refreshedRefreshToken) {
+                        localStorage.setItem('refreshToken', refreshedRefreshToken);
+                    }
                     
                     // Retry original request with new token
-                    originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+                    originalRequest.headers.Authorization = `Bearer ${refreshedToken}`;
                     return client(originalRequest);
                 } catch (refreshError) {
                     // Refresh failed, redirect to login
                     localStorage.removeItem('accessToken');
+                    localStorage.removeItem('token');
                     localStorage.removeItem('refreshToken');
                     window.location.href = '/login';
                     return Promise.reject(refreshError);
@@ -73,6 +80,7 @@ client.interceptors.response.use(
             } else {
                 // No refresh token, redirect to login
                 localStorage.removeItem('accessToken');
+                localStorage.removeItem('token');
                 window.location.href = '/login';
             }
         }

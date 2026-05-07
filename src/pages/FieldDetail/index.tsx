@@ -29,6 +29,7 @@ import { useCreateBooking } from '../../hooks/useBookings';
 import { useAuthContext } from '../../contexts/AuthContext';
 import BookingSlotPicker from '../../components/BookingSlotPicker';
 import { formatPrice } from '../../utils/format';
+import { getGroundCoverImageUrl } from '../../api/fields';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -52,7 +53,6 @@ export default function FieldDetail() {
 
   const createBooking = useCreateBooking();
 
-  // ✅ Mapping backend → frontend
   const field = data
     ? {
         id: data.id,
@@ -60,14 +60,13 @@ export default function FieldDetail() {
         location: data.location,
         pricePerHour: data.price_per_hour,
         isAvailable: data.is_available,
-
-        // fallback (karena backend belum ada)
         imageUrl:
+          getGroundCoverImageUrl(data) ||
           'https://images.pexels.com/photos/1171084/pexels-photo-1171084.jpeg?auto=compress&cs=tinysrgb&w=1200',
-        sport: 'futsal',
-        rating: 0,
-        openTime: '08:00',
-        closeTime: '22:00',
+        sport: data.sport_type,
+        rating: data.rating ?? 0,
+        openTime: data.open_time,
+        closeTime: data.close_time,
         facilities: [],
         description: '',
       }

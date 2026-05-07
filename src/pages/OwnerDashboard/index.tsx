@@ -1,6 +1,15 @@
 import { useState } from 'react';
-import { Layout, Menu, Typography, Avatar } from 'antd';
-import { LayoutDashboard, MapPin, CalendarClock, TrendingUp, LogOut, Menu as MenuIcon } from 'lucide-react';
+import { Avatar, Button, Layout, Menu, Tooltip, Typography } from 'antd';
+import {
+  CalendarClock,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  MapPin,
+  Menu as MenuIcon,
+  TrendingUp,
+  User,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../contexts/AuthContext';
 import OwnerFieldsTab from './OwnerFieldsTab';
@@ -92,16 +101,33 @@ export default function OwnerDashboard() {
       </Sider>
 
       <Layout>
-        <Header className="bg-white border-b border-gray-100 px-6 flex items-center gap-3 shadow-sm h-16">
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="text-gray-500 hover:text-gray-700 lg:hidden"
-          >
-            <MenuIcon size={20} />
-          </button>
-          <Title level={4} className="!mb-0 !text-gray-900">
-            {tabTitles[activeTab]}
-          </Title>
+        <Header className="bg-white border-b border-gray-100 px-6 flex items-center justify-between gap-3 shadow-sm h-16">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="text-gray-500 hover:text-gray-700 lg:hidden"
+            >
+              <MenuIcon size={20} />
+            </button>
+            <Title level={4} className="!mb-0 !text-gray-900 truncate">
+              {tabTitles[activeTab]}
+            </Title>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Tooltip title="Home">
+              <Button
+                icon={<Home size={16} />}
+                onClick={() => navigate('/')}
+              />
+            </Tooltip>
+            <Tooltip title="Lihat Profil">
+              <Button
+                icon={<User size={16} />}
+                onClick={() => navigate('/profile')}
+              />
+            </Tooltip>
+          </div>
         </Header>
 
         <Content className="p-6 bg-gray-50">

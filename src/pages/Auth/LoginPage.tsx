@@ -11,14 +11,16 @@ const { Title, Text } = Typography;
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated } = useAuthContext();
+  const { isAuthenticated, isOwner } = useAuthContext();
   const login = useLogin();
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
 
   useEffect(() => {
-    if (isAuthenticated) navigate(from, { replace: true });
-  }, [isAuthenticated, navigate, from]);
+    if (!isAuthenticated) return;
+
+    navigate(from === '/' && isOwner ? '/owner/dashboard' : from, { replace: true });
+  }, [isAuthenticated, isOwner, navigate, from]);
 
   const onFinish = (values: LoginPayload) => {
     login.mutate(values);

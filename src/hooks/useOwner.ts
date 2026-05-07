@@ -8,6 +8,7 @@ import {
   confirmBooking,
   fetchRevenue,
 } from '../api/owner';
+import type { CreateFieldPayload } from '../api/owner';
 
 export function useOwnerFields() {
   return useQuery({
@@ -20,7 +21,7 @@ export function useOwnerFields() {
 export function useCreateField() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: FormData) => createField(data),
+    mutationFn: (data: CreateFieldPayload) => createField(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['owner-fields'] });
       queryClient.invalidateQueries({ queryKey: ['fields'] });
@@ -35,7 +36,7 @@ export function useCreateField() {
 export function useUpdateField() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: FormData }) => updateField(id, data),
+    mutationFn: ({ id, data }: { id: string; data: CreateFieldPayload }) => updateField(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['owner-fields'] });
       queryClient.invalidateQueries({ queryKey: ['fields'] });

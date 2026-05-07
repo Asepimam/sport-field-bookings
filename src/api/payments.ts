@@ -1,7 +1,7 @@
 import client from './client';
 
 export interface PaymentConfirmPayload {
-  bookingId: number;
+  bookingId: string;
   method: 'BANK_TRANSFER' | 'QRIS';
 }
 

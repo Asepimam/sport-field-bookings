@@ -1,5 +1,5 @@
 import { Button, Card, Form, Input, Select, Typography, Divider } from 'antd';
-import { Mail, Lock, User } from 'lucide-react';
+import { Mail, Lock, Phone, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRegister } from '../../hooks/useAuth';
 import type { RegisterPayload } from '../../api/auth';
@@ -8,17 +8,59 @@ import { useAuthContext } from '../../contexts/AuthContext';
 
 const { Title, Text } = Typography;
 
+interface RegisterFormValues {
+  user_name: string;
+  password: string;
+  email: string;
+  role: 'CUSTOMER' | 'OWNER';
+  countryCode: string;
+  phone_number: string;
+  first_name: string;
+  last_name: string;
+}
+
+const COUNTRY_CODES = [
+  { label: 'ID +62', value: '+62' },
+  { label: 'MY +60', value: '+60' },
+  { label: 'SG +65', value: '+65' },
+];
+
+const normalizePhoneNumber = (countryCode: string, phoneNumber: string) => {
+  const countryDigits = countryCode.replace(/\D/g, '');
+  const digits = phoneNumber.replace(/\D/g, '');
+  const withoutCountryCode = digits.startsWith(countryDigits)
+    ? digits.slice(countryDigits.length)
+    : digits;
+  const normalizedDigits = withoutCountryCode.startsWith('0')
+    ? withoutCountryCode.slice(1)
+    : withoutCountryCode;
+
+  return `${countryCode}${normalizedDigits}`;
+};
+
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthContext();
+  const { isAuthenticated, isOwner } = useAuthContext();
   const register = useRegister();
 
   useEffect(() => {
-    if (isAuthenticated) navigate('/', { replace: true });
-  }, [isAuthenticated, navigate]);
+    if (!isAuthenticated) return;
 
-  const onFinish = (values: RegisterPayload) => {
-    register.mutate(values);
+    navigate(isOwner ? '/owner/dashboard' : '/', { replace: true });
+  }, [isAuthenticated, isOwner, navigate]);
+
+  const onFinish = (values: RegisterFormValues) => {
+    const payload: RegisterPayload = {
+      user_name: values.user_name,
+      password: values.password,
+      email: values.email,
+      role: values.role,
+      phone_number: normalizePhoneNumber(values.countryCode, values.phone_number),
+      first_name: values.first_name,
+      last_name: values.last_name,
+    };
+
+    register.mutate(payload);
   };
 
   return (
@@ -33,9 +75,32 @@ export default function RegisterPage() {
         </div>
 
         <Card className="shadow-lg border-0 rounded-2xl">
-          <Form layout="vertical" onFinish={onFinish} size="large">
+          <Form
+            layout="vertical"
+            onFinish={onFinish}
+            size="large"
+            initialValues={{ countryCode: '+62', role: 'CUSTOMER' }}
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Form.Item
+                name="first_name"
+                label="Nama Depan"
+                rules={[{ required: true, message: 'Nama depan wajib diisi' }]}
+              >
+                <Input prefix={<User size={16} className="text-gray-400" />} placeholder="Ucok" />
+              </Form.Item>
+
+              <Form.Item
+                name="last_name"
+                label="Nama Belakang"
+                rules={[{ required: true, message: 'Nama belakang wajib diisi' }]}
+              >
+                <Input placeholder="Indong" />
+              </Form.Item>
+            </div>
+
             <Form.Item
-              name="username"
+              name="user_name"
               label="Username"
               rules={[{ required: true, message: 'Username wajib diisi' }]}
             >
@@ -59,9 +124,30 @@ export default function RegisterPage() {
             </Form.Item>
 
             <Form.Item
+              name="phone_number"
+              label="Nomor Telepon"
+              rules={[
+                { required: true, message: 'Nomor telepon wajib diisi' },
+                {
+                  pattern: /^[0-9+\-\s()]+$/,
+                  message: 'Nomor telepon hanya boleh berisi angka',
+                },
+              ]}
+            >
+              <Input
+                prefix={<Phone size={16} className="text-gray-400" />}
+                addonBefore={
+                  <Form.Item name="countryCode" noStyle>
+                    <Select className="w-28" options={COUNTRY_CODES} />
+                  </Form.Item>
+                }
+                placeholder="0877654654362"
+              />
+            </Form.Item>
+
+            <Form.Item
               name="role"
               label="Daftar Sebagai"
-              initialValue="CUSTOMER"
               rules={[{ required: true }]}
             >
               <Select

@@ -1,4 +1,4 @@
-import { Alert, Button, DatePicker, Spin, Tag, Typography } from 'antd';
+import { Alert, DatePicker, Spin, Tag, Typography } from 'antd';
 import { CalendarCheck } from 'lucide-react';
 import dayjs, { Dayjs } from 'dayjs';
 import { useAvailableSlots } from '../hooks/useFields';

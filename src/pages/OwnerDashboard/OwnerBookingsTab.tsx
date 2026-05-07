@@ -14,30 +14,30 @@ export default function OwnerBookingsTab() {
   const columns: ColumnsType<Booking> = [
     {
       title: 'Customer',
-      dataIndex: 'customerName',
-      key: 'customerName',
+      dataIndex: 'customer_email',
+      key: 'customer_email',
       render: (n: string) => <Text strong>{n}</Text>,
     },
     {
       title: 'Lapangan',
-      dataIndex: 'fieldName',
-      key: 'fieldName',
+      dataIndex: 'ground_name',
+      key: 'ground_name',
     },
     {
       title: 'Tanggal',
-      dataIndex: 'date',
-      key: 'date',
+      dataIndex: 'booking_date',
+      key: 'booking_date',
       render: (d: string) => formatDate(d),
     },
     {
       title: 'Jam',
       key: 'time',
-      render: (_, r) => `${r.startTime} – ${r.endTime}`,
+      render: (_, r) => `${r.start_time} – ${r.end_time}`,
     },
     {
       title: 'Total',
-      dataIndex: 'totalPrice',
-      key: 'totalPrice',
+      dataIndex: 'total_price',
+      key: 'total_price',
       render: (p: number) => <Text className="text-blue-600 font-medium">{formatPrice(p)}</Text>,
     },
     {
@@ -84,7 +84,7 @@ export default function OwnerBookingsTab() {
       ) : (
         <Table
           columns={columns}
-          dataSource={bookings}
+          dataSource={bookings ?? []}
           rowKey="id"
           pagination={{ pageSize: 10 }}
           locale={{ emptyText: 'Belum ada booking masuk' }}
