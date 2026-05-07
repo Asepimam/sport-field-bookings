@@ -48,7 +48,7 @@ export interface FieldFilters {
 
 // ================= ADAPTER =================
 
-const toPagedResponse = <T>(
+export const toPagedResponse = <T>(
   res: ApiResponse<T[]>
 ): PagedResponse<T> => {
   return {

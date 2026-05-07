@@ -21,7 +21,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { Plus, Pencil, Upload as UploadIcon } from 'lucide-react';
 import dayjs from 'dayjs';
 import { useOwnerFields, useCreateField, useUpdateField } from '../../hooks/useOwner';
-import type { Field } from '../../api/fields';
+import type { GroundResponse } from '../../api/fields';
 import { formatPrice } from '../../utils/format';
 
 const { Text } = Typography;
@@ -31,7 +31,7 @@ const FACILITIES = ['WiFi', 'Shower', 'Parking', 'Gym', 'Cafeteria', 'Locker'];
 
 export default function OwnerFieldsTab() {
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Field | null>(null);
+  const [editing, setEditing] = useState<GroundResponse | null>(null);
   const [form] = Form.useForm();
 
   const { data: fields, isLoading, isError } = useOwnerFields();
@@ -44,11 +44,11 @@ export default function OwnerFieldsTab() {
     setModalOpen(true);
   };
 
-  const openEdit = (field: Field) => {
+  const openEdit = (field: GroundResponse) => {
     setEditing(field);
     form.setFieldsValue({
       ...field,
-      operationalHours: [dayjs(field.openTime, 'HH:mm'), dayjs(field.closeTime, 'HH:mm')],
+      operationalHours: [dayjs(field.open_time, 'HH:mm'), dayjs(field.close_time, 'HH:mm')],
     });
     setModalOpen(true);
   };
@@ -60,8 +60,8 @@ export default function OwnerFieldsTab() {
     fd.append('sport', String(values.sport));
     fd.append('location', String(values.location));
     fd.append('pricePerHour', String(values.pricePerHour));
-    fd.append('openTime', open.format('HH:mm'));
-    fd.append('closeTime', close.format('HH:mm'));
+    fd.append('open_time', open.format('HH:mm'));
+    fd.append('close_time', close.format('HH:mm'));
     fd.append('description', String(values.description || ''));
     (values.facilities as string[] || []).forEach((f: string) => fd.append('facilities', f));
 
@@ -78,15 +78,15 @@ export default function OwnerFieldsTab() {
     setModalOpen(false);
   };
 
-  const columns: ColumnsType<Field> = [
+  const columns: ColumnsType<GroundResponse> = [
     {
       title: 'Lapangan',
       key: 'name',
       render: (_, row) => (
         <div className="flex items-center gap-3">
-          <img src={row.imageUrl} alt={row.name} className="w-10 h-10 rounded-lg object-cover" />
+          {/* <img src={row.imageUrl} alt={row.name} className="w-10 h-10 rounded-lg object-cover" /> */}
           <div>
-            <Text strong>{row.name}</Text>
+            <Text strong>{row.name_ground}</Text>
             <div className="text-xs text-gray-500">{row.location}</div>
           </div>
         </div>
@@ -94,7 +94,7 @@ export default function OwnerFieldsTab() {
     },
     { title: 'Olahraga', dataIndex: 'sport', render: (s) => <Tag className="capitalize">{s}</Tag> },
     { title: 'Harga/Jam', dataIndex: 'pricePerHour', render: (p) => formatPrice(p) },
-    { title: 'Jam Operasional', key: 'hours', render: (_, r) => `${r.openTime} – ${r.closeTime}` },
+    { title: 'Jam Operasional', key: 'hours', render: (_, r) => `${r.open_time} – ${r.close_time}` },
     {
       title: 'Aksi',
       key: 'action',
@@ -122,7 +122,7 @@ export default function OwnerFieldsTab() {
       {isLoading ? (
         <div className="flex justify-center py-12"><Spin /></div>
       ) : (
-        <Table columns={columns} dataSource={fields} rowKey="id" scroll={{ x: 600 }} />
+        <Table columns={columns} dataSource={fields!.content} rowKey="id" scroll={{ x: 600 }} />
       )}
 
       <Modal

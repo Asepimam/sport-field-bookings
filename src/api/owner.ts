@@ -1,5 +1,5 @@
 import client from './client';
-import type { Field } from './fields';
+import { ApiResponse, toPagedResponse, type GroundResponse } from './fields';
 import type { Booking } from './bookings';
 
 export interface RevenueStats {
@@ -13,25 +13,25 @@ export interface CreateFieldPayload {
   sport: string;
   location: string;
   pricePerHour: number;
-  openTime: string;
-  closeTime: string;
+  open_time: string;
+  close_time: string;
   facilities: string[];
   description?: string;
 }
 
 export const fetchOwnerFields = () =>
-  client.get<Field[]>('/owner/fields').then((r) => r.data);
+  client.get<ApiResponse<GroundResponse[]>>('grounds/owner').then((r) => toPagedResponse(r.data));
 
 export const createField = (data: FormData) =>
   client
-    .post<Field>('/owner/fields', data, {
+    .post<GroundResponse>('/owner/fields', data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     .then((r) => r.data);
 
-export const updateField = (id: number, data: FormData) =>
+export const updateField = (id: string, data: FormData) =>
   client
-    .put<Field>(`/owner/fields/${id}`, data, {
+    .put<GroundResponse>(`/owner/fields/${id}`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     .then((r) => r.data);
@@ -39,7 +39,7 @@ export const updateField = (id: number, data: FormData) =>
 export const fetchOwnerBookings = () =>
   client.get<Booking[]>('/owner/bookings').then((r) => r.data);
 
-export const confirmBooking = (id: number) =>
+export const confirmBooking = (id: string) =>
   client.put<Booking>(`/owner/bookings/${id}/confirm`).then((r) => r.data);
 
 export const fetchRevenue = () =>

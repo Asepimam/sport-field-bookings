@@ -35,11 +35,11 @@ export default function RegisterPage() {
         <Card className="shadow-lg border-0 rounded-2xl">
           <Form layout="vertical" onFinish={onFinish} size="large">
             <Form.Item
-              name="name"
-              label="Nama Lengkap"
-              rules={[{ required: true, message: 'Nama wajib diisi' }]}
+              name="username"
+              label="Username"
+              rules={[{ required: true, message: 'Username wajib diisi' }]}
             >
-              <Input prefix={<User size={16} className="text-gray-400" />} placeholder="Nama lengkap Anda" />
+              <Input prefix={<User size={16} className="text-gray-400" />} placeholder="Username Anda" />
             </Form.Item>
 
             <Form.Item

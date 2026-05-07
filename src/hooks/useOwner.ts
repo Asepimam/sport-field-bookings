@@ -35,7 +35,7 @@ export function useCreateField() {
 export function useUpdateField() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: FormData }) => updateField(id, data),
+    mutationFn: ({ id, data }: { id: string; data: FormData }) => updateField(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['owner-fields'] });
       queryClient.invalidateQueries({ queryKey: ['fields'] });
@@ -59,7 +59,7 @@ export function useOwnerBookings() {
 export function useConfirmBooking() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => confirmBooking(id),
+    mutationFn: (id: string) => confirmBooking(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['owner-bookings'] });
       message.success('Booking dikonfirmasi!');
