@@ -60,7 +60,14 @@ export default function RegisterPage() {
       last_name: values.last_name,
     };
 
-    register.mutate(payload);
+    register.mutate(payload, {
+      onSuccess: () => {
+        navigate('/login', {
+          replace: true,
+          state: { registered: true, email: values.email },
+        });
+      },
+    });
   };
 
   return (

@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useMyBookings } from '../../hooks/useBookings';
 import type { Booking } from '../../api/bookings';
 import { formatDate, formatPrice, statusLabel } from '../../utils/format';
-import Navbar from '../../components/Navbar';
 
 const { Title, Text } = Typography;
 
@@ -69,7 +68,6 @@ export default function CustomerBookings() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-6">
           <Title level={3} className="!mb-1">Booking Saya</Title>

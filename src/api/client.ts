@@ -1,5 +1,6 @@
 // api/client.ts
 import axios from 'axios';
+import { isTokenExpired, removeStoredAuth } from '../utils/authToken';
 
 // Gunakan import.meta.env untuk Vite
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
@@ -18,6 +19,12 @@ client.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
         if (token) {
+            if (isTokenExpired(token)) {
+                removeStoredAuth();
+                window.location.href = '/login';
+                return Promise.reject(new Error('Token sudah expired. Silakan login kembali.'));
+            }
+
             config.headers.Authorization = `Bearer ${token}`;
         }
         
@@ -71,16 +78,13 @@ client.interceptors.response.use(
                     return client(originalRequest);
                 } catch (refreshError) {
                     // Refresh failed, redirect to login
-                    localStorage.removeItem('accessToken');
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('refreshToken');
+                    removeStoredAuth();
                     window.location.href = '/login';
                     return Promise.reject(refreshError);
                 }
             } else {
                 // No refresh token, redirect to login
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('token');
+                removeStoredAuth();
                 window.location.href = '/login';
             }
         }

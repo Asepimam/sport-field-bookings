@@ -9,7 +9,8 @@ const { Text } = Typography;
 export default function Navbar() {
   const navigate = useNavigate();
   const { isAuthenticated, user, isOwner, logout } = useAuthContext();
-  useProfile();
+  const { data: profile } = useProfile();
+  const currentUser = profile ?? user;
 
   const menuItems = [
     {
@@ -63,7 +64,7 @@ export default function Navbar() {
                   className="bg-blue-600"
                 />
                 <Text className="text-sm font-medium text-gray-700 hidden sm:block max-w-[120px] truncate">
-                  {user?.name || 'Profil'}
+                  {currentUser?.name || 'Profil'}
                 </Text>
               </button>
             </Dropdown>

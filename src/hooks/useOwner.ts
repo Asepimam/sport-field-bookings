@@ -7,8 +7,14 @@ import {
   fetchOwnerBookings,
   confirmBooking,
   fetchRevenue,
+  fetchOwnerRevenue,
+  fetchOwnerRevenueSummary,
+  fetchGroundFacilities,
+  createFacility,
+  updateFacility,
+  deleteFacility,
 } from '../api/owner';
-import type { CreateFieldPayload } from '../api/owner';
+import type { CreateFieldPayload, CreateFacilityPayload } from '../api/owner';
 
 export function useOwnerFields() {
   return useQuery({
@@ -76,5 +82,87 @@ export function useRevenue() {
     queryKey: ['revenue'],
     queryFn: fetchRevenue,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useOwnerRevenue(startDate?: string, endDate?: string) {
+  return useQuery({
+    queryKey: ['owner-revenue', startDate, endDate],
+    queryFn: () => fetchOwnerRevenue(startDate, endDate),
+    staleTime: 5 * 60 * 1000,
+    enabled: !!startDate && !!endDate,
+  });
+}
+
+export function useOwnerRevenueSummary() {
+  return useQuery({
+    queryKey: ['owner-revenue-summary'],
+    queryFn: fetchOwnerRevenueSummary,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+// Facility hooks
+export function useGroundFacilities(groundId: string) {
+  return useQuery({
+    queryKey: ['ground-facilities', groundId],
+    queryFn: () => fetchGroundFacilities(groundId),
+    staleTime: 60 * 1000,
+    enabled: !!groundId,
+  });
+}
+
+export function useCreateFacility() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ groundId, data }: { groundId: string; data: CreateFacilityPayload }) =>
+      createFacility(groundId, data),
+    onSuccess: (_, { groundId }) => {
+      queryClient.invalidateQueries({ queryKey: ['ground-facilities', groundId] });
+      message.success('Fasilitas berhasil ditambahkan');
+    },
+    onError: () => {
+      message.error('Gagal menambahkan fasilitas');
+    },
+  });
+}
+
+export function useUpdateFacility() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      groundId,
+      facilityId,
+      data,
+    }: {
+      groundId: string;
+      facilityId: string;
+      data: CreateFacilityPayload;
+    }) => updateFacility(groundId, facilityId, data),
+    onSuccess: (_, { groundId }) => {
+      queryClient.invalidateQueries({ queryKey: ['ground-facilities', groundId] });
+      message.success('Fasilitas berhasil diperbarui');
+    },
+    onError: () => {
+      message.error('Gagal memperbarui fasilitas');
+    },
+  });
+}
+
+export function useDeleteFacility() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ groundId, facilityId }: { groundId: string; facilityId: string }) =>
+      deleteFacility(groundId, facilityId),
+    onSuccess: (_, { groundId }) => {
+      queryClient.invalidateQueries({ queryKey: ['ground-facilities', groundId] });
+      message.success('Fasilitas berhasil dihapus');
+    },
+    onError: () => {
+      message.error('Gagal menghapus fasilitas');
+    },
   });
 }

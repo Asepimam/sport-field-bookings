@@ -12,14 +12,15 @@ export interface Booking {
   total_price: number;
   status: string;
   created_at: string;
+  selected_facilities?: string[];
 }
 
 export interface CreateBookingPayload {
-  fieldId: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  totalPrice: number;
+  ground_id: string;
+  booking_date: string;
+  start_time: string;
+  end_time: string;
+  selected_facilities?: string[];
 }
 
 interface ApiEnvelope<T> {
@@ -53,7 +54,15 @@ export const createBooking = (data: CreateBookingPayload) =>
 
 export const fetchMyBookings = () =>
   client
-    .get<Booking[] | ApiEnvelope<Booking[]>>('/bookings/my-bookings')
+    .get<Booking[] | ApiEnvelope<Booking[]>>('/bookings')
+    .then((r) => {
+      const bookings = unwrapApiResponse(r.data);
+      return Array.isArray(bookings) ? bookings : [];
+    });
+
+export const fetchOwnerBookings = () =>
+  client
+    .get<Booking[] | ApiEnvelope<Booking[]>>('/bookings/owner')
     .then((r) => {
       const bookings = unwrapApiResponse(r.data);
       return Array.isArray(bookings) ? bookings : [];

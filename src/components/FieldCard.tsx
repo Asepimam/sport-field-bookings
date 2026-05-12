@@ -24,15 +24,15 @@ export default function FieldCard({ field }: { field: GroundResponse }) {
       onClick={() => navigate(`/field/${field.id}`)}
       cover={
         <div className="relative overflow-hidden" style={{ height: 200 }}>
-          {/* <img
+          <img
             alt={field.name_ground}
-            src={field.imageUrl}
+            src={field.cover_image_url}
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
             onError={(e) => {
               (e.target as HTMLImageElement).src =
                 'https://images.pexels.com/photos/46798/the-ball-stadion-football-the-pitch-46798.jpeg?auto=compress&cs=tinysrgb&w=600';
             }}
-          /> */}
+          />
           <Tag
             color={sportColors[field.sport_type?.toLowerCase()] || 'default'}
             className="absolute top-3 left-3 capitalize font-medium"

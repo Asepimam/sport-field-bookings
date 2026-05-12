@@ -23,11 +23,12 @@ import {
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import dayjs, { Dayjs } from 'dayjs';
+import 'dayjs/locale/id';
 
 import { useGroundDetail } from '../../hooks/useFields';
 import { useCreateBooking } from '../../hooks/useBookings';
 import { useAuthContext } from '../../contexts/AuthContext';
-import BookingSlotPicker from '../../components/BookingSlotPicker';
+import BookingStepperForm from '../../components/BookingStepperForm';
 import { formatPrice } from '../../utils/format';
 import { getGroundCoverImageUrl } from '../../api/fields';
 
@@ -67,46 +68,10 @@ export default function FieldDetail() {
         rating: data.rating ?? 0,
         openTime: data.open_time,
         closeTime: data.close_time,
-        facilities: [],
+        facilities: data.facilities ?? [],
         description: '',
       }
     : null;
-
-  const toggleSlot = (slot: string) => {
-    setSelectedSlots((prev) =>
-      prev.includes(slot)
-        ? prev.filter((s) => s !== slot)
-        : [...prev, slot].sort()
-    );
-  };
-
-  const totalPrice =
-    field ? selectedSlots.length * field.pricePerHour : 0;
-
-  const handleBook = async () => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-
-    if (!field || !selectedDate || selectedSlots.length === 0) return;
-
-    const sorted = [...selectedSlots].sort();
-    const startTime = sorted[0];
-    const endTime = dayjs(`2000-01-01 ${sorted[sorted.length - 1]}`)
-      .add(1, 'hour')
-      .format('HH:mm');
-
-    const booking = await createBooking.mutateAsync({
-      fieldId: field.id,
-      date: selectedDate.format('YYYY-MM-DD'),
-      startTime,
-      endTime,
-      totalPrice,
-    });
-
-    navigate(`/payment/${booking.id}`);
-  };
 
   // ================= UI =================
 
@@ -190,14 +155,14 @@ export default function FieldDetail() {
               <div className="flex flex-wrap gap-2">
                 {field.facilities.map((f) => (
                   <Tag
-                    key={f}
+                    key={f.id}
                     icon={
-                      facilityIcons[String(f).toLowerCase()] || (
+                      facilityIcons[f.name.toLowerCase()] || (
                         <CheckCircle size={12} />
                       )
                     }
                   >
-                    {f}
+                    {f.name}
                   </Tag>
                 ))}
               </div>
@@ -206,50 +171,74 @@ export default function FieldDetail() {
 
           {/* RIGHT */}
           <Col xs={24} lg={10}>
-            <div className="bg-white rounded-2xl p-6 sticky top-24">
-              <Text className="text-2xl font-bold text-blue-600">
-                {formatPrice(field.pricePerHour)} / jam
-              </Text>
-
-              <BookingSlotPicker
-                fieldId={field.id}
-                openTime={field.openTime}
-                closeTime={field.closeTime}
-                selectedDate={selectedDate}
-                selectedSlots={selectedSlots}
-                onDateChange={(d) => {
-                  setSelectedDate(d);
-                  setSelectedSlots([]);
-                }}
-                onSlotToggle={toggleSlot}
-              />
-
-              {selectedSlots.length > 0 && (
-                <div className="mt-4">
-                  Total: {formatPrice(totalPrice)}
-                </div>
-              )}
-
-              {!isAuthenticated && selectedSlots.length > 0 && (
+            {!isAuthenticated ? (
+              <div className="bg-white rounded-2xl p-6">
                 <Alert
-                  message="Login untuk booking"
+                  message="Silakan login untuk melakukan booking"
                   type="warning"
                   showIcon
-                  className="mt-3"
+                  className="mb-4"
                 />
-              )}
+                <Button
+                  type="primary"
+                  block
+                  size="large"
+                  onClick={() => navigate('/login')}
+                >
+                  Login Sekarang
+                </Button>
+              </div>
+            ) : (
+              <div className="sticky top-24 space-y-4">
+                <div className="bg-white rounded-2xl p-6">
+                  <p className="text-sm text-gray-600 mb-3">Harga Per Jam</p>
+                  <Text className="text-3xl font-bold text-blue-600">
+                    {formatPrice(field?.pricePerHour || 0)}
+                  </Text>
+                </div>
 
-              <Button
-                type="primary"
-                block
-                className="mt-4"
-                disabled={!selectedDate || selectedSlots.length === 0}
-                loading={createBooking.isPending}
-                onClick={handleBook}
-              >
-                {isAuthenticated ? 'Booking' : 'Login'}
-              </Button>
-            </div>
+                {field && (
+                  <BookingStepperForm
+                    fieldId={field.id}
+                    fieldName={field.name}
+                    pricePerHour={field.pricePerHour}
+                    openTime={field.openTime}
+                    closeTime={field.closeTime}
+                    selectedDate={selectedDate}
+                    selectedSlots={selectedSlots}
+                    facilities={field.facilities || []}
+                    onDateChange={(d) => {
+                      setSelectedDate(d);
+                      setSelectedSlots([]);
+                    }}
+                    onSlotsChange={setSelectedSlots}
+                    onBook={async (selectedFacilities) => {
+                      if (!field || !selectedDate || selectedSlots.length === 0)
+                        return;
+
+                      const sorted = [...selectedSlots].sort();
+                      const startTime = sorted[0];
+                      const endTime = dayjs(
+                        `2000-01-01 ${sorted[sorted.length - 1]}`
+                      )
+                        .add(1, 'hour')
+                        .format('HH:mm');
+
+                      const booking = await createBooking.mutateAsync({
+                        ground_id: field.id,
+                        booking_date: selectedDate.format('YYYY-MM-DD'),
+                        start_time: startTime,
+                        end_time: endTime,
+                        selected_facilities: selectedFacilities,
+                      });
+
+                      navigate(`/payment/${booking.id}`);
+                    }}
+                    isLoading={createBooking.isPending}
+                  />
+                )}
+              </div>
+            )}
           </Col>
         </Row>
       </div>

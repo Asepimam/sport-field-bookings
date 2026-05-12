@@ -4,6 +4,7 @@ import axios from 'axios';
 import { login, register, fetchMe } from '../api/auth';
 import type { LoginPayload, RegisterPayload } from '../api/auth';
 import { useAuthContext } from '../contexts/AuthContext';
+import { isTokenExpired } from '../utils/authToken';
 
 interface ApiErrorResponse {
   message?: string;
@@ -46,7 +47,7 @@ export function useProfile() {
       setUser(profile);
       return profile;
     },
-    enabled: !!token,
+    enabled: !!token && !isTokenExpired(token),
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -68,14 +69,9 @@ export function useLogin() {
 }
 
 export function useRegister() {
-  const { setToken } = useAuthContext();
   return useMutation({
     mutationFn: (data: RegisterPayload) => register(data),
-    onSuccess: (res) => {
-      setToken(res.token);
-      if (res.refreshToken) {
-        localStorage.setItem('refreshToken', res.refreshToken);
-      }
+    onSuccess: () => {
       message.success('Registrasi berhasil!');
     },
     onError: (error) => {

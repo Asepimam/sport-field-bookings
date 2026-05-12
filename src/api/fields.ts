@@ -16,8 +16,17 @@ export interface GroundResponse {
   rating: number;
   total_reviews?: number;
   is_open_now?: boolean;
+  facilities?: GroundFacility[];
   created_at: string;
   updated_at: string;
+}
+
+export interface GroundFacility {
+  id: string;
+  ground_id?: string;
+  name: string;
+  description?: string;
+  price: number;
 }
 
 export interface ApiResponse<T> {
@@ -44,6 +53,7 @@ export interface PagedResponse<T> {
 }
 
 export interface FieldFilters {
+  q?: string;
   sport?: string;
   location?: string;
   minPrice?: number;
@@ -79,6 +89,29 @@ export const fetchPublicGrounds = (params?: FieldFilters) =>
         console.log('[API] public grounds raw:', response.data);
       }
       return toPagedResponse(response.data);
+    });
+
+export const fetchGrounds = (params?: FieldFilters) =>
+  client
+    .get<ApiResponse<GroundResponse[]>>('/grounds', { params })
+    .then((response) => toPagedResponse(response.data));
+
+export const fetchGroundLocations = (params?: { q?: string; limit?: number }, useAuthenticatedEndpoint = false) =>
+  client
+    .get<string[] | ApiResponse<string[]>>(
+      useAuthenticatedEndpoint ? '/grounds/locations' : '/grounds/public/locations',
+      { params }
+    )
+    .then((res) => {
+      if (
+        res.data &&
+        typeof res.data === 'object' &&
+        'data' in res.data
+      ) {
+        return res.data.data;
+      }
+
+      return Array.isArray(res.data) ? res.data : [];
     });
 
 // OWNER GROUNDS (FIXED)

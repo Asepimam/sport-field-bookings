@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { UserProfile } from '../api/auth';
+import { decodeToken, getTokenExpiresAt, isTokenExpired, removeStoredAuth } from '../utils/authToken';
 
 interface AuthContextValue {
   token: string | null;
@@ -15,32 +16,15 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-interface DecodedToken {
-  sub?: string;
-  upn?: string;
-  groups?: string[];
-  exp?: number;
-}
+const getStoredToken = () => {
+  const storedToken = localStorage.getItem('token') || localStorage.getItem('accessToken');
 
-const getStoredToken = () => localStorage.getItem('token') || localStorage.getItem('accessToken');
-
-const decodeToken = (token: string | null): DecodedToken | null => {
-  if (!token) return null;
-
-  try {
-    const payload = token.split('.')[1];
-    if (!payload) return null;
-
-    const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const paddedPayload = normalizedPayload.padEnd(
-      normalizedPayload.length + ((4 - (normalizedPayload.length % 4)) % 4),
-      '='
-    );
-    const decodedPayload = atob(paddedPayload);
-    return JSON.parse(decodedPayload) as DecodedToken;
-  } catch {
+  if (isTokenExpired(storedToken)) {
+    removeStoredAuth();
     return null;
   }
+
+  return storedToken;
 };
 
 const getRoleFromToken = (token: string | null): 'CUSTOMER' | 'OWNER' | null => {
@@ -58,28 +42,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const queryClient = useQueryClient();
   const role = user?.role ?? getRoleFromToken(token);
+  const isAuthenticated = !!token && !isTokenExpired(token);
 
-  const setToken = (t: string | null) => {
+  const setToken = useCallback((t: string | null) => {
+    if (isTokenExpired(t)) {
+      setTokenState(null);
+      setUser(null);
+      removeStoredAuth();
+      queryClient.clear();
+      return;
+    }
+
     setTokenState(t);
     if (t) {
       localStorage.setItem('token', t);
       localStorage.setItem('accessToken', t);
     } else {
-      localStorage.removeItem('token');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      removeStoredAuth();
     }
-  };
+  }, [queryClient]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setToken(null);
     setUser(null);
     queryClient.clear();
-  };
+  }, [queryClient, setToken]);
 
   useEffect(() => {
     if (!token) setUser(null);
   }, [token]);
+
+  useEffect(() => {
+    if (!token) return undefined;
+
+    const expiresAt = getTokenExpiresAt(token);
+    if (!expiresAt) {
+      logout();
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      logout();
+    }, Math.max(expiresAt - Date.now(), 0));
+
+    return () => window.clearTimeout(timeoutId);
+  }, [logout, token]);
 
   return (
     <AuthContext.Provider
@@ -91,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser,
         logout,
         isOwner: role === 'OWNER',
-        isAuthenticated: !!token,
+        isAuthenticated,
       }}
     >
       {children}

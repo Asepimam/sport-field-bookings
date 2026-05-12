@@ -69,3 +69,54 @@ export const confirmBooking = (id: string) =>
 
 export const fetchRevenue = () =>
   client.get<RevenueStats>('/owner/revenue').then((r) => r.data);
+
+export const fetchOwnerRevenue = (startDate?: string, endDate?: string) => {
+  const params = new URLSearchParams();
+  if (startDate) params.append('startDate', startDate);
+  if (endDate) params.append('endDate', endDate);
+
+  return client
+    .get<Record<string, any> | ApiEnvelope<Record<string, any>>>(`/revenue/owner?${params}`)
+    .then((r) => unwrapApiResponse(r.data));
+};
+
+export const fetchOwnerRevenueSummary = () =>
+  client
+    .get<Record<string, any> | ApiEnvelope<Record<string, any>>>('/revenue/owner/summary')
+    .then((r) => unwrapApiResponse(r.data));
+
+// Facility API functions
+export interface Facility {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  groundId: string;
+}
+
+export interface CreateFacilityPayload {
+  name: string;
+  description?: string;
+  price: number;
+}
+
+export const fetchGroundFacilities = (groundId: string) =>
+  client
+    .get<Facility[] | ApiEnvelope<Facility[]>>(`/grounds/${groundId}/facilities`)
+    .then((r) => {
+      const facilities = unwrapApiResponse(r.data);
+      return Array.isArray(facilities) ? facilities : [];
+    });
+
+export const createFacility = (groundId: string, data: CreateFacilityPayload) =>
+  client
+    .post<Facility | ApiEnvelope<Facility>>(`/grounds/${groundId}/facilities`, data)
+    .then((r) => unwrapApiResponse(r.data));
+
+export const updateFacility = (groundId: string, facilityId: string, data: CreateFacilityPayload) =>
+  client
+    .put<Facility | ApiEnvelope<Facility>>(`/grounds/${groundId}/facilities/${facilityId}`, data)
+    .then((r) => unwrapApiResponse(r.data));
+
+export const deleteFacility = (groundId: string, facilityId: string) =>
+  client.delete(`/grounds/${groundId}/facilities/${facilityId}`);

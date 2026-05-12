@@ -12,24 +12,33 @@ import {
   Result,
 } from 'antd';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import { useFields } from '../../hooks/useFields';
+import { useFields, useGroundLocations } from '../../hooks/useFields';
 import FieldCard from '../../components/FieldCard';
 import type { FieldFilters } from '../../api/fields';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 const { Title, Text } = Typography;
 
-const SPORTS = ['Futsal', 'Badminton', 'Basketball', 'Tennis', 'Volleyball'];
+const SPORTS = ['Football', 'Futsal', 'Badminton', 'Basketball', 'Tennis', 'Volleyball', 'Squash'];
 
 export default function LandingPage() {
+  const { isAuthenticated } = useAuthContext();
   const [filters, setFilters] = useState<Omit<FieldFilters, 'page'>>({});
+  const [locationSearch, setLocationSearch] = useState('');
   const [localFilters, setLocalFilters] = useState({
+    q: '',
     location: '',
     sport: undefined as string | undefined,
     priceRange: [0, 500000] as [number, number],
   });
+  const { data: locations = [], isLoading: isLoadingLocations } = useGroundLocations(
+    locationSearch,
+    isAuthenticated
+  );
 
   const applyFilters = () => {
     setFilters({
+      q: localFilters.q || undefined,
       location: localFilters.location || undefined,
       sport: localFilters.sport,
       minPrice: localFilters.priceRange[0] || undefined,
@@ -38,12 +47,12 @@ export default function LandingPage() {
   };
 
   const resetFilters = () => {
-    setLocalFilters({ location: '', sport: undefined, priceRange: [0, 500000] });
+    setLocalFilters({ q: '', location: '', sport: undefined, priceRange: [0, 500000] });
     setFilters({});
   };
 
   const { data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useFields(filters);
+    useFields(filters, isAuthenticated);
 
   const fields = data?.pages.flatMap((p) => p.content) ?? [];
 
@@ -76,15 +85,33 @@ export default function LandingPage() {
           </div>
           <Row gutter={[16, 16]} align="bottom">
             <Col xs={24} sm={12} md={6}>
-              <Text className="text-xs text-gray-500 block mb-1">Lokasi</Text>
+              <Text className="text-xs text-gray-500 block mb-1">Cari Lapangan</Text>
               <Input
-                placeholder="Cari lokasi..."
+                placeholder="Nama atau lokasi..."
                 prefix={<Search size={14} />}
-                value={localFilters.location}
+                value={localFilters.q}
                 onChange={(e) =>
-                  setLocalFilters((f) => ({ ...f, location: e.target.value }))
+                  setLocalFilters((f) => ({ ...f, q: e.target.value }))
                 }
+                onPressEnter={applyFilters}
                 allowClear
+              />
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Text className="text-xs text-gray-500 block mb-1">Wilayah</Text>
+              <Select
+                showSearch
+                placeholder="Semua wilayah"
+                className="w-full"
+                value={localFilters.location || undefined}
+                onChange={(v) => setLocalFilters((f) => ({ ...f, location: v ?? '' }))}
+                onSearch={setLocationSearch}
+                allowClear
+                loading={isLoadingLocations}
+                filterOption={(input, option) =>
+                  String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+                options={locations.map((location) => ({ label: location, value: location }))}
               />
             </Col>
             <Col xs={24} sm={12} md={6}>
@@ -98,7 +125,7 @@ export default function LandingPage() {
                 options={SPORTS.map((s) => ({ label: s, value: s.toLowerCase() }))}
               />
             </Col>
-            <Col xs={24} md={8}>
+            <Col xs={24} md={6}>
               <Text className="text-xs text-gray-500 block mb-1">
                 Harga/Jam: Rp{localFilters.priceRange[0].toLocaleString('id-ID')} –{' '}
                 {localFilters.priceRange[1] >= 500000
@@ -115,7 +142,7 @@ export default function LandingPage() {
                 tooltip={{ formatter: (v) => `Rp${(v ?? 0).toLocaleString('id-ID')}` }}
               />
             </Col>
-            <Col xs={24} md={4} className="flex gap-2">
+            <Col xs={24} md={6} className="flex gap-2">
               <Button type="primary" onClick={applyFilters} className="flex-1">
                 Cari
               </Button>

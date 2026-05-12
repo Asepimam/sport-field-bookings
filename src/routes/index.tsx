@@ -29,15 +29,15 @@ export const router = createBrowserRouter([
       {
         path: '/customer/bookings',
         element: (
-          // <ProtectedRoute requiredRole="CUSTOMER">
+          <ProtectedRoute requiredRole="CUSTOMER">
             <CustomerBookings />
-          // </ProtectedRoute>
+          </ProtectedRoute>
         ),
       },
       {
         path: '/payment/:bookingId',
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute requiredRole="CUSTOMER">
             <PaymentPage />
           </ProtectedRoute>
         ),
